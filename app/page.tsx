@@ -94,7 +94,7 @@ export default function Home() {
         <motion.header variants={itemVariants} className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[#1e293b]/40 p-6 rounded-3xl border border-slate-800 shadow-xl backdrop-blur-md">
           <div className="flex items-center gap-4">
             <div>
-              <h1 className="text-2xl font-black text-white tracking-tighter italic uppercase">Executive Finance</h1>
+              <h1 className="text-2xl font-black text-white tracking-tighter italic uppercase">Executive Finance pro</h1>
               <p className="text-[10px] text-indigo-400 uppercase tracking-[0.3em] font-bold">Smart Currency Engine</p>
             </div>
             <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setIsPrivate(!isPrivate)} className={`p-2 rounded-full transition-all ${isPrivate ? 'bg-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.5)]' : 'bg-slate-800 text-slate-400'}`}>
