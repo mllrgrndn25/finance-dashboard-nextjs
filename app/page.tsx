@@ -20,10 +20,7 @@ const CURRENCIES = {
 
 const containerVariants = {
   hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 }
-  }
+  visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
 };
 
 const itemVariants = {
@@ -61,17 +58,15 @@ export default function Home() {
   };
 
   const handleReset = async () => {
-    const confirmReset = window.confirm("¿Eliminar todo el historial? Esta acción es irreversible.");
+    const confirmReset = window.confirm("¿Eliminar todo el historial?");
     if (confirmReset) {
       try {
         setLoading(true);
-        const { error } = await supabase.from('transactions').delete().not('id', 'is', null);
-        if (error) throw error;
-        toast.success("Sistema reseteado correctamente ✨");
-        setTransactions([]);
-        setTotals({ income: 0, expense: 0, balance: 0 });
+        await supabase.from('transactions').delete().not('id', 'is', null);
+        toast.success("Sistema reseteado ✨");
+        fetchTransactions();
       } catch (err: any) {
-        toast.error("No se pudo borrar: " + err.message);
+        toast.error("Error al resetear");
       } finally {
         setLoading(false);
       }
@@ -82,9 +77,10 @@ export default function Home() {
     fetchTransactions();
   }, []);
 
+  const currentRate = CURRENCIES[currency as keyof typeof CURRENCIES].rate;
+
   const convert = (amount: number) => {
-    const selected = CURRENCIES[currency as keyof typeof CURRENCIES];
-    return amount * selected.rate;
+    return amount * currentRate;
   };
 
   const displayedTransactions = filteredMethod === 'all' 
@@ -92,58 +88,31 @@ export default function Home() {
     : transactions.filter(t => t.payment_method === filteredMethod);
 
   return (
-    <motion.main 
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-      className="min-h-screen bg-[#0f172a] text-slate-200 p-4 md:p-8 font-sans"
-    >
+    <motion.main initial="hidden" animate="visible" variants={containerVariants} className="min-h-screen bg-[#0f172a] text-slate-200 p-4 md:p-8 font-sans">
       <div className="max-w-7xl mx-auto space-y-6">
         
-        {/* Header Corregido */}
-        <motion.header 
-          variants={itemVariants}
-          className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[#1e293b]/40 p-6 rounded-3xl border border-slate-800 shadow-xl backdrop-blur-md"
-        >
+        <motion.header variants={itemVariants} className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[#1e293b]/40 p-6 rounded-3xl border border-slate-800 shadow-xl backdrop-blur-md">
           <div className="flex items-center gap-4">
             <div>
               <h1 className="text-2xl font-black text-white tracking-tighter italic uppercase">Executive Finance</h1>
-              <p className="text-[10px] text-indigo-400 uppercase tracking-[0.3em] font-bold">Premium Experience</p>
+              <p className="text-[10px] text-indigo-400 uppercase tracking-[0.3em] font-bold">Smart Currency Engine</p>
             </div>
-            <motion.button 
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={() => setIsPrivate(!isPrivate)}
-              className={`p-2 rounded-full transition-all ${isPrivate ? 'bg-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.5)]' : 'bg-slate-800 text-slate-400'}`}
-            >
+            <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setIsPrivate(!isPrivate)} className={`p-2 rounded-full transition-all ${isPrivate ? 'bg-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.5)]' : 'bg-slate-800 text-slate-400'}`}>
               {isPrivate ? <EyeOff size={18} /> : <Eye size={18} />}
             </motion.button>
           </div>
           
           <div className="mt-4 md:mt-0 flex items-center gap-3">
-            <motion.button 
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleReset}
-              className="text-[10px] font-bold text-rose-500 hover:bg-rose-500/10 border border-rose-900/50 px-4 py-2 rounded-lg transition-all uppercase"
-            >
-              Resetear Todo
-            </motion.button>
-
+            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleReset} className="text-[10px] font-bold text-rose-500 hover:bg-rose-500/10 border border-rose-900/50 px-4 py-2 rounded-lg transition-all uppercase">Resetear Todo</motion.button>
             <div className="flex items-center gap-2 bg-[#0f172a] p-1.5 rounded-xl border border-slate-700">
-              <span className="text-[9px] font-black text-slate-500 ml-2">DIVISA</span>
-              <select 
-                value={currency} 
-                onChange={(e) => setCurrency(e.target.value)}
-                className="bg-transparent text-indigo-400 text-xs font-bold focus:outline-none cursor-pointer pr-2"
-              >
+              <span className="text-[9px] font-black text-slate-500 ml-2 uppercase">Viendo en</span>
+              <select value={currency} onChange={(e) => setCurrency(e.target.value)} className="bg-transparent text-indigo-400 text-xs font-bold focus:outline-none cursor-pointer pr-2">
                 {Object.keys(CURRENCIES).map(c => <option key={c} value={c} className="bg-[#1e293b]">{c}</option>)}
               </select>
             </div>
           </div>
         </motion.header>
 
-        {/* Tarjetas con Efecto Cascada */}
         <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <SummaryCard title="Balance" amount={convert(totals.balance)} type="total" isVisible={!isPrivate} />
           <SummaryCard title="Ingresos" amount={convert(totals.income)} type="income" isVisible={!isPrivate} />
@@ -152,17 +121,17 @@ export default function Home() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <motion.div variants={itemVariants} className="lg:col-span-4 space-y-6">
-            <TransactionForm />
+            {/* Pasamos la moneda y la tasa actual al formulario */}
+            <TransactionForm onSuccess={fetchTransactions} currentCurrency={currency} rate={currentRate} />
             <FinancialAdvice />
           </motion.div>
 
           <motion.div variants={itemVariants} className="lg:col-span-8 space-y-6">
-            <div className="bg-[#1e293b]/20 border border-slate-800 rounded-3xl flex flex-col overflow-hidden shadow-lg h-[500px]">
+            <div className="bg-[#1e293b]/20 border border-slate-800 rounded-3xl flex flex-col shadow-lg h-[500px]">
               <div className="p-5 border-b border-slate-800 bg-[#1e293b]/40">
                 <div className="flex justify-between items-center mb-4 text-xs font-bold text-slate-400 uppercase tracking-widest">
                   <span className="flex items-center gap-2"><Filter size={14} /> Historial</span>
                 </div>
-                
                 <div className="flex flex-wrap gap-2">
                   <FilterBtn label="Todos" active={filteredMethod === 'all'} onClick={() => setFilteredMethod('all')} icon={<LayoutGrid size={12}/>} />
                   <FilterBtn label="Efectivo" active={filteredMethod === 'Efectivo'} onClick={() => setFilteredMethod('Efectivo')} icon={<Banknote size={12}/>} />
@@ -170,18 +139,10 @@ export default function Home() {
                   <FilterBtn label="Transferencia" active={filteredMethod === 'Transferencia'} onClick={() => setFilteredMethod('Transferencia')} icon={<Landmark size={12}/>} />
                 </div>
               </div>
-
               <div className="flex-1 overflow-y-auto divide-y divide-slate-800/50">
                 <AnimatePresence mode='popLayout'>
                   {displayedTransactions.map((t) => (
-                    <motion.div 
-                      layout
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      key={t.id} 
-                      className="p-4 flex justify-between items-center hover:bg-[#1e293b]/40 transition-all"
-                    >
+                    <motion.div layout initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, scale: 0.95 }} key={t.id} className="p-4 flex justify-between items-center hover:bg-[#1e293b]/40 transition-all">
                       <div className="flex items-center gap-4">
                         <div className={`p-2 rounded-full ${t.type === 'income' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
                           {t.payment_method === 'Efectivo' ? <Banknote size={16}/> : t.payment_method === 'Transferencia' ? <Landmark size={16}/> : <CreditCard size={16}/>}
@@ -202,11 +163,7 @@ export default function Home() {
                 </AnimatePresence>
               </div>
             </div>
-
-            <motion.div 
-              variants={itemVariants}
-              className={`bg-[#1e293b]/50 border border-slate-800 p-6 rounded-3xl h-[350px] transition-all duration-700 ${isPrivate ? 'opacity-10 blur-2xl' : ''}`}
-            >
+            <motion.div variants={itemVariants} className={`bg-[#1e293b]/50 border border-slate-800 p-6 rounded-3xl h-[350px] transition-all duration-700 ${isPrivate ? 'opacity-10 blur-2xl' : ''}`}>
               <FinanceChart data={[{ name: 'Flujo', ingresos: convert(totals.income), gastos: convert(totals.expense) }]} />
             </motion.div>
           </motion.div>
@@ -218,12 +175,7 @@ export default function Home() {
 
 function FilterBtn({ label, active, onClick, icon }: any) {
   return (
-    <motion.button 
-      whileHover={{ y: -2 }}
-      whileTap={{ scale: 0.95 }}
-      onClick={onClick} 
-      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${active ? 'bg-indigo-600 border-indigo-500 text-white shadow-[0_5px_15px_rgba(79,70,229,0.4)]' : 'bg-slate-800 border-slate-700 text-slate-400'}`}
-    >
+    <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.95 }} onClick={onClick} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${active ? 'bg-indigo-600 border-indigo-500 text-white shadow-[0_5px_15px_rgba(79,70,229,0.4)]' : 'bg-slate-800 border-slate-700 text-slate-400'}`}>
       {icon} {label.toUpperCase()}
     </motion.button>
   );
