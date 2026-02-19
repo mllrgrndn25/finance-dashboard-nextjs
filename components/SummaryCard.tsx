@@ -1,34 +1,43 @@
 "use client";
-import { TrendingUp, TrendingDown, ShieldCheck } from 'lucide-react';
 
 interface Props {
   title: string;
   amount: number;
   type: 'income' | 'expense' | 'total';
+  isVisible?: boolean; // Controla el desenfoque (Modo Privacidad)
 }
 
-export default function SummaryCard({ title, amount, type }: Props) {
-  const isTotal = type === 'total';
-  
+export default function SummaryCard({ title, amount, type, isVisible = true }: Props) {
+  // Definición de colores según el tipo de tarjeta
+  const colors = {
+    income: 'text-emerald-400',
+    expense: 'text-rose-400',
+    total: 'text-indigo-400'
+  };
+
+  // Iconos o bordes sutiles según el tipo
+  const borderColors = {
+    income: 'border-emerald-500/20',
+    expense: 'border-rose-500/20',
+    total: 'border-indigo-500/20'
+  };
+
   return (
-    <div className={`
-      relative overflow-hidden p-8 rounded-xl border border-slate-800 transition-all duration-300
-      ${isTotal ? 'bg-gradient-to-br from-indigo-900 to-slate-900 shadow-2xl' : 'bg-[#1e293b] hover:border-slate-700'}
-    `}>
-      <div className="flex justify-between items-start mb-6">
-        <div className={`p-2 rounded-lg ${isTotal ? 'bg-indigo-500/20 text-indigo-300' : 'bg-slate-800 text-slate-400'}`}>
-          {type === 'income' && <TrendingUp size={20} />}
-          {type === 'expense' && <TrendingDown size={20} />}
-          {type === 'total' && <ShieldCheck size={20} />}
-        </div>
-        <span className="text-[10px] font-bold uppercase tracking-tighter text-slate-500">Live Data</span>
+    <div className={`bg-[#1e293b]/50 border ${borderColors[type]} p-5 rounded-2xl shadow-lg transition-all duration-300`}>
+      <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
+        {title}
+      </h3>
+      <div className="relative">
+        <p className={`text-2xl font-mono font-bold ${colors[type]} transition-all duration-500 ${!isVisible ? 'blur-lg select-none opacity-40' : 'blur-0'}`}>
+          ${amount.toLocaleString()}
+        </p>
+        
+        {!isVisible && (
+          <div className="absolute inset-0 flex items-center">
+            <div className="h-1 w-16 bg-slate-700/50 rounded-full animate-pulse" />
+          </div>
+        )}
       </div>
-      
-      <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">{title}</p>
-      <h2 className={`text-3xl font-bold tracking-tight ${isTotal ? 'text-white' : 'text-slate-200'}`}>
-        <span className="text-slate-500 font-light mr-1">$</span>
-        {amount.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-      </h2>
     </div>
   );
 }
